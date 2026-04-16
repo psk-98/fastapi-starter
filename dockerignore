@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+*.pyc
+.mypy_cache
+.coverage
+htmlcov
+
+# Virtual environments
+.venv
+
+.zed
+.DS_Store
+*.db
+README.md
+.git
+test
