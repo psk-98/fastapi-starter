@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import or_
 
 from app.core.deps import db_dependency
 from app.core.security import create_access_token, hash_password, verify_password
@@ -13,8 +14,12 @@ from app.schema.users import CreateUserRequest, TokenResponse, UserResponse
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def authenticate_user(username: str, password: str, db):
-    user = db.query(User).filter(User.username == username).first()
+def authenticate_user(username_email: str, password: str, db):
+    user = (
+        db.query(User)
+        .filter(or_(User.username == username_email, User.email == username_email))
+        .first()
+    )
     if not user:
         return False
     if not verify_password(password, user.password):
@@ -23,7 +28,10 @@ def authenticate_user(username: str, password: str, db):
 
 
 @router.post(
-    "/login/access_token", response_model=TokenResponse, status_code=status.HTTP_200_OK
+    "/login/access_token",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+    description="Login in with your username or email in the username field.",
 )
 def login_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency

@@ -1,8 +1,16 @@
 import secrets
-from typing import Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import PostgresDsn, computed_field
+from pydantic import AnyUrl, BeforeValidator, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def parse_cors(v: Any) -> list[str] | str:
+    if isinstance(v, str) and not v.startswith("["):
+        return [i.strip() for i in v.split(",") if i.strip()]
+    elif isinstance(v, list | str):
+        return v
+    raise ValueError(v)
 
 
 class Settings(BaseSettings):
@@ -17,13 +25,19 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = (
         60 * 24 * 8
     )  # 8 days=60 minutes * 24 hours * 8 days
-    FRONTEND_HOST: str = "http://localhost:5173"
+    FRONTEND_HOST: str = "http://localhost:3000"  # next js frontend
     ENV: Literal["local", "staging", "production"] = "local"
+    CELERY_BROKER_URI: str = "redis://localhost:6379"
     DATABASE_NAME: str = ""
     DATABASE_USER: str
     DATABASE_PASSWORD: str = ""
     DATABASE_HOST: str
-    DATABASE_PORT: int = 6543
+    DATABASE_DOCKER_NETWORK_HOST: str
+    DATABASE_PORT: int = (
+        6543  # for postgre, this is what i usually use for docker containers
+    )
+
+    DATABASE_DOCKER_NETWORK_PORT: int = 5432  # for postgre
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -32,10 +46,41 @@ class Settings(BaseSettings):
             scheme="postgresql+psycopg2",
             username=self.DATABASE_USER,
             password=self.DATABASE_PASSWORD,
-            host=self.DATABASE_HOST,
-            port=self.DATABASE_PORT,
+            host=(
+                self.DATABASE_HOST
+                if self.ENV == "local"
+                else self.DATABASE_DOCKER_NETWORK_HOST
+            ),
+            port=(
+                self.DATABASE_PORT
+                if self.ENV == "local"
+                else self.DATABASE_DOCKER_NETWORK_PORT
+            ),
             path=self.DATABASE_NAME,
         )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def CELERY_DATABASE_URI(self) -> PostgresDsn:
+        return PostgresDsn.build(
+            scheme="postgresql+psycopg2",
+            username=self.DATABASE_USER,
+            password=self.DATABASE_PASSWORD,
+            host=self.DATABASE_DOCKER_NETWORK_HOST,
+            port=self.DATABASE_DOCKER_NETWORK_PORT,
+            path=self.DATABASE_NAME,
+        )
+
+    BACKEND_CORS_ORIGINS: Annotated[
+        list[AnyUrl] | str, BeforeValidator(parse_cors)
+    ] = []
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def all_cors_origins(self) -> list[str]:
+        return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS] + [
+            self.FRONTEND_HOST
+        ]
 
 
 settings = Settings()  # type: ignore

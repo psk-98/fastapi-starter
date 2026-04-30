@@ -1,51 +1,44 @@
 networks:
-  social-network:
+  fastapi-starter:
     driver: bridge
 
 services:
   load-balancer:
     image: nginx
-    container_name: social-network-nginx
+    container_name: fastapi-starter-nginx
     restart: unless-stopped
     ports:
       - "8000:80"
     networks:
-      - social-network
+      - fastapi-starter
     volumes:
       - ./.docker/nginx:/etc/nginx/conf.d
   app-1:
-    container_name: social-app-instance-1
+    container_name: fastapi-starter-instance-1
     build:
       dockerfile: ./.docker/app/Dockerfile
     restart: unless-stopped
     depends_on:
       - db
     networks:
-      - social-network
+      - fastapi-starter
+
   app-2:
-    container_name: social-app-instance-2
+    container_name: fastapi-starter-instance-2
     build:
       dockerfile: ./.docker/app/Dockerfile
     restart: unless-stopped
     depends_on:
       - db
     networks:
-      - social-network
-  app-3:
-    container_name: social-app-instance-3
-    build:
-      dockerfile: ./.docker/app/Dockerfile
-    restart: unless-stopped
-    depends_on:
-      - db
-    networks:
-      - social-network
+      - fastapi-starter
+
   db:
-    container_name: social-media-db
+    container_name: fastapi-starter-db
     image: postgres:15
     restart: unless-stopped
     networks:
-      - social-network
+      - fastapi-starter
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:

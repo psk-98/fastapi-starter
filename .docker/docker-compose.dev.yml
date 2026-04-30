@@ -1,6 +1,6 @@
 services:
   db:
-    container_name: social-media-db
+    container_name: fastapi-starter-db
     image: postgres:15
     restart: unless-stopped
     volumes:
