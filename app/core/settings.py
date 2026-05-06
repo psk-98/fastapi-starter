@@ -1,8 +1,16 @@
 import secrets
 from typing import Annotated, Any, Literal
 
-from pydantic import AnyUrl, BeforeValidator, PostgresDsn, computed_field
+from pydantic import (
+    AnyUrl,
+    BeforeValidator,
+    EmailStr,
+    PostgresDsn,
+    computed_field,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing_extensions import Self
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -27,7 +35,9 @@ class Settings(BaseSettings):
     )  # 8 days=60 minutes * 24 hours * 8 days
     FRONTEND_HOST: str = "http://localhost:3000"  # next js frontend
     ENV: Literal["local", "staging", "production"] = "local"
+
     CELERY_BROKER_URI: str = "redis://localhost:6379"
+
     DATABASE_NAME: str = ""
     DATABASE_USER: str
     DATABASE_PASSWORD: str = ""
@@ -81,6 +91,28 @@ class Settings(BaseSettings):
         return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS] + [
             self.FRONTEND_HOST
         ]
+
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    SMTP_PORT: int = 587
+    SMTP_HOST: str | None = None
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    EMAILS_FROM_EMAIL: EmailStr | None = None
+    EMAILS_FROM_NAME: str | None = None
+
+    @model_validator(mode="after")
+    def _set_default_emails_from(self) -> Self:
+        if not self.EMAILS_FROM_NAME:
+            self.EMAILS_FROM_NAME = self.PROJECT_NAME
+        return self
+
+    EMAIL_RESET_TOKEN_EXPIRE_MINUTES: int = 60
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def emails_enabled(self) -> bool:
+        return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
 
 
 settings = Settings()  # type: ignore

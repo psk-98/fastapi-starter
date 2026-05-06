@@ -24,6 +24,15 @@ class ChangeUserPasswordRequest(BaseModel):
     }
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str
+
+
 class UserResponse(BaseModel):
     email: str
     username: str

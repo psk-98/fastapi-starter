@@ -1,6 +1,8 @@
 from enum import Enum as PyEnum
 
-from sqlalchemy import Boolean, Column, Enum, Integer, String
+from sqlalchemy import Boolean, Enum, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 
 from app.models.base import Base
 from app.models.mixins import TimestampMixin
@@ -14,9 +16,17 @@ class UserRole(str, PyEnum):
 class User(TimestampMixin, Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, nullable=False)
-    username = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
-    is_active = Column(Boolean, default=True)
-    role = Column(Enum(UserRole), nullable=False, default=UserRole.user)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
+    username: Mapped[str] = mapped_column(
+        String, unique=True, nullable=False, index=True
+    )
+    password: Mapped[str] = mapped_column(String, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    role: Mapped[str] = mapped_column(
+        Enum(UserRole), nullable=False, default=UserRole.user
+    )
+
+    reset_tokens: Mapped[list["PasswordResetToken"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )

@@ -1,4 +1,48 @@
 services:
+  celery-worker:
+    build:
+      context: .
+      dockerfile: ./.docker/app/Dockerfile
+    command: /start-celery-worker
+    environment:
+      CELERY_BROKER_URL: ${CELERY_BROKER_URI}
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+
+  flower:
+    build:
+      context: .
+      dockerfile: ./.docker/app/Dockerfile
+    command: /start-flower
+    environment:
+      CELERY_BROKER_URL: ${CELERY_BROKER_URI}
+    volumes:
+      - .:/app
+    ports:
+      - "5557:5555"
+    depends_on:
+      - redis
+      - db
+
+  redis-commander:
+    image: ghcr.io/joeferner/redis-commander:latest
+    container_name: fastapi-starter-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
   db:
     container_name: fastapi-starter-db
     image: postgres:15
