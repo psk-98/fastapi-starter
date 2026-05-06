@@ -5,7 +5,8 @@ services:
       dockerfile: ./.docker/app/Dockerfile
     command: /start-celery-worker
     environment:
-      CELERY_BROKER_URL: ${CELERY_BROKER_URI}
+      CELERY_BROKER_URL: redis://redis:6379/0
+    restart: unless-stopped
     volumes:
       - .:/app
     depends_on:
@@ -18,7 +19,8 @@ services:
       dockerfile: ./.docker/app/Dockerfile
     command: /start-flower
     environment:
-      CELERY_BROKER_URL: ${CELERY_BROKER_URI}
+      CELERY_BROKER_URL: redis://redis:6379/0
+    restart: unless-stopped
     volumes:
       - .:/app
     ports:

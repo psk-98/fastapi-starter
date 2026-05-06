@@ -21,6 +21,7 @@ services:
     command: /start-celery-worker
     environment:
       CELERY_BROKER_URL: ${CELERY_BROKER_URI}
+    restart: unless-stopped
     networks:
       - fastapi-starter
     volumes:
@@ -36,6 +37,7 @@ services:
     command: /start-flower
     environment:
       CELERY_BROKER_URL: ${CELERY_BROKER_URI}
+    restart: unless-stopped
     volumes:
       - .:/app
     ports:
