@@ -12,7 +12,7 @@ app = FastAPI(
     # redoc_url="/redoc", # default
 )
 
-Base.metadata.create_all(engine)
+# Base.metadata.create_all(engine)
 
 app.include_router(users.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
