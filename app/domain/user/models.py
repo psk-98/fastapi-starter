@@ -1,16 +1,9 @@
-from enum import Enum as PyEnum
-
 from sqlalchemy import Boolean, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-
+from app.domain.user.enums import UserRole
 from app.models.base import Base
 from app.models.mixins import TimestampMixin
-
-
-class UserRole(str, PyEnum):
-    admin = "admin"
-    user = "user"
 
 
 class User(TimestampMixin, Base):

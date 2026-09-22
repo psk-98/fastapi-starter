@@ -14,9 +14,10 @@ from app.core.security import (
     verify_password,
 )
 from app.core.settings import settings
+from app.domain.auth.actions import forgot_password_action
+from app.domain.auth.actions.login_bearer_token_action import login_bearer_token_action
 from app.models.password_reset_token import PasswordResetToken
 from app.models.user import User
-
 from app.schema.users import (
     CreateUserRequest,
     ForgotPasswordRequest,
@@ -29,19 +30,6 @@ from app.tasks import send_password_reset_email
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-def authenticate_user(username_email: str, password: str, db) -> User | bool:
-    user = (
-        db.query(User)
-        .filter(or_(User.username == username_email, User.email == username_email))
-        .first()
-    )
-    if not user:
-        return False
-    if not verify_password(password, user.password):
-        return False
-    return user
-
-
 @router.post(
     "/login/access_token",
     response_model=TokenResponse,
@@ -51,50 +39,12 @@ def authenticate_user(username_email: str, password: str, db) -> User | bool:
 def login_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency
 ):
-    user = authenticate_user(form_data.username, form_data.password, db)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user"
-        )
-    token = create_access_token(
-        user.username,  # type: ignore
-        user.id,  # type: ignore
-        user.role,  # type: ignore
-        timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-    )
-
-    return {"access_token": token, "token_type": "Bearer"}
+    return login_bearer_token_action(form_data, db)
 
 
 @router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
 def forgot_password(request: ForgotPasswordRequest, db: db_dependency):
-    user = db.query(User).filter(User.email == request.email).first()
-
-    print(user)
-
-    if user:
-        db.query(PasswordResetToken).filter(
-            PasswordResetToken.user_id == user.id
-        ).delete()
-
-        token = generate_reset_token()
-        token_hash = hash_reset_token(token)
-        expires_at = datetime.now(UTC) + timedelta(
-            minutes=settings.EMAIL_RESET_TOKEN_EXPIRE_MINUTES
-        )
-
-        reset_token = PasswordResetToken(
-            user_id=user.id, token_hash=token_hash, expires_at=expires_at
-        )
-
-        db.add(reset_token)
-        db.commit()
-
-        send_password_reset_email.apply_async(args=[user.email, user.username, token])  # type: ignore[prop-decorator]
-
-    return {
-        "message": "If an account exists with this email, you will receive password reset instructions.",
-    }
+    return forgot_password_action(request, db)
 
 
 @router.post("/reset-password")

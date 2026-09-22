@@ -2,8 +2,14 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.core.deps import db_dependency, user_dependency
 from app.core.security import bcrypt_context
-from app.models.user import User
-from app.schema.users import ChangeUserPasswordRequest, UpdateUserRequest, UserResponse
+from app.domain.user.actions.change_password_action import change_password_action
+from app.domain.user.actions.update_me_action import update_me_action
+from app.domain.user.models import User
+from app.domain.user.schemas import (
+    ChangeUserPasswordRequest,
+    UpdateUserRequest,
+    UserResponse,
+)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -17,40 +23,14 @@ def get_auth_user(auth_user: user_dependency, db: db_dependency):
 def change_password(
     auth_user: user_dependency, db: db_dependency, request: ChangeUserPasswordRequest
 ):
-    user = db.query(User).filter(User.id == auth_user.get("user_id")).first()
-
-    if not bcrypt_context.verify(request.password, user.password):  # type: ignore
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    if bcrypt_context.hash(request.password) == user.password:  # type: ignore
-        raise HTTPException(
-            status_code=400, detail="New password cannot be the same as the current one"
-        )
-
-    user.password = bcrypt_context.hash(request.password)  # type: ignore
-    db.commit()
+    change_password_action(auth_user, db, request)
 
 
 @router.patch("/", status_code=status.HTTP_204_NO_CONTENT)
-def update_auth_user(
+def update_me(
     request: UpdateUserRequest, auth_user: user_dependency, db: db_dependency
 ):
-    user_model = db.query(User).filter(User.id == auth_user.get("user_id")).first()
-
-    if request.username:
-        existing_user = db.query(User).filter(User.username == request.username).first()
-        if existing_user and existing_user.id != user_model.id:  # type: ignore
-            raise HTTPException(status_code=409, detail="Username already taken")
-        user_model.username = request.username  # type: ignore
-
-    if request.email:
-        existing_user = db.query(User).filter(User.email == request.email).first()
-        if existing_user and existing_user.id != user_model.id:  # type: ignore
-            raise HTTPException(status_code=409, detail="Email already taken")
-        user_model.email = request.email  # type: ignore
-    # print(user_model.username)
-
-    db.add(user_model)
-    db.commit()
+    update_me_action(request, auth_user, db)
 
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
