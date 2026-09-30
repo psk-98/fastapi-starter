@@ -5,6 +5,12 @@ set -x
 echo "installing deps ..."
 uv sync
 
+echo "installing email deps ..."
+bun install
+
+echo "exporting email templates ..."
+bun run email:export
+
 echo "copying .env ..."
 cp example.dev.env .env
 

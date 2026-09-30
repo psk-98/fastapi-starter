@@ -13,6 +13,10 @@ htmlcov
 # Virtual environments
 .venv
 
+# Node / React Email
+node_modules
+.react-email
+
 .zed
 .DS_Store
 *.db
