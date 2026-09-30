@@ -1,4 +1,4 @@
- from datetime import timedelta
+from datetime import timedelta
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -10,7 +10,9 @@ from app.core.settings import settings
 from app.domain.auth.helpers.authenticate_user import authenticate_user
 
 
-def login_bearer_token_action(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency) #add response type add some point
+def login_bearer_token_action(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency
+):  # add response type add some point
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
