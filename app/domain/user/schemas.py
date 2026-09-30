@@ -1,11 +1,6 @@
-from enum import Enum as PyEnum
-
 from pydantic import BaseModel, EmailStr, Field
 
-
-class UserRole(str, PyEnum):
-    user = "user"
-    admin = "admin"
+from app.domain.user.enums import UserRole
 
 
 class UpdateUserRequest(BaseModel):
@@ -72,8 +67,3 @@ class CreateUserRequest(BaseModel):
 
 class CurrentUser(BaseModel):
     user: str
-
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str
