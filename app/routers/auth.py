@@ -8,11 +8,11 @@ from app.domain.auth.actions.create_user_action import create_user_action
 from app.domain.auth.actions.forgot_password_action import forgot_password_action
 from app.domain.auth.actions.login_bearer_token_action import login_bearer_token_action
 from app.domain.auth.actions.reset_password_action import reset_password_action
+from app.domain.auth.schemas import TokenResponse
 from app.domain.user.schemas import (
     CreateUserRequest,
     ForgotPasswordRequest,
     ResetPasswordRequest,
-    TokenResponse,
     UserResponse,
 )
 

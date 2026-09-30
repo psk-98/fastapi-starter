@@ -1,8 +1,8 @@
 from datetime import timedelta
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.sql.annotation import Annotated
 
 from app.core.deps import db_dependency
 from app.core.security import create_access_token
